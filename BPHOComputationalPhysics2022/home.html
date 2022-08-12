@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <link rel="stylesheet" href="style.css">
+    <script src="math.js" type="text/javascript"></script>
+    <title>ISA</title>
+</head>
+<body style="overflow-x: hidden;">
+       
+    <div style="margin:-1vw 0vw 0vw -1vw; width: 101vw">
+        <div id="first">
+            <div style="margin-top:-4vw;">
+                <h1>A Standard Atmosphere</h1>
+                <h2>BPHO Computational Physics Challenge 2022</h2>
+                <h3>Ari Bell & Kaiya Palmer</h3>
+            </div>
+        </div> 
+    </div>
+
+    <div class="buttons">
+        <h2>Graph type:</h2>
+        <button onclick="runGraph('Lapse rate')">Lapse rate vs altitude</button>
+        <button onclick="runGraph('Temperature')">Temperature vs altitude</button>
+        <button onclick="runGraph('Pressure')">Pressure vs altitude</button>
+        <button onclick="runGraph('Boiling point')">Boiling point vs altitude</button>
+        <button onclick="runGraph('Dew point')">Dew point vs altitude</button>
+    </div>
+
+    
+    <div>
+        <div id="second">
+
+            <div class="graph">
+                <canvas id="myChart"></canvas>
+            </div>
+
+            <div class="slider">
+                <input type="range" min="0" max="1" step="0.25" id="slider" id="uChange1">
+                <p>Relative humidity (%): <span id="val1"></span></p>
+            </div>
+        </div>
+    </div>
+        
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <script type="text/javascript">
+
+        var iU = 1
+        const g = 9.8076
+        var flag = "Lapse rate"
+
+        runGraph("Lapse rate");
+
+        //code
+        function runGraph(a){
+
+            let chartStatus = Chart.getChart("myChart");
+            if (chartStatus != undefined) {
+                chartStatus.destroy();
+            } 
+
+            var temperature = 15 //celcius
+            var h = 0 //km
+            var pressure = 1013.25 //mbar
+            var hh = 0.01 //delta h
+            var x = []
+            var y = []
+
+            console.log("graph ran")
+
+            for (let i = 0; i < 1200; i++) {
+                var saturation = 6.1121 * (Math.E**( (18.678-(temperature)/234.5)*(temperature/(temperature + 257.14)))) 
+
+                var r = ((287/461.5)*(iU*saturation)) / (pressure-(iU*saturation))
+
+                var lapseRate = g * ((1 + ((r*2501000)/(287*(temperature+273)))) / (1003.5 + (((2501000**2)*r))/(461.5*((temperature+273)**2)))) *1000
+                var p = -((0.02896*g)/(8.314*(temperature+273)))*(pressure-iU*(1-(0.01802/0.02896)*saturation))*hh 
+                var tBoil = (((1/100) - ((8.314/45.07) * Math.log((pressure/1013.25))))**-1)
+                var tDew = (243.04*(Math.log(iU)+((17.625*temperature)/(243.04+temperature)))) / (17.625-Math.log(iU)-((17.625*temperature)/(243.04+temperature)))
+
+                h += hh
+                temperature = (temperature - lapseRate * hh)
+                pressure += p
+
+                flag = a;
+
+                x.push(h.toFixed(2))
+
+                if (a == "Lapse rate"){
+                    y.push(lapseRate);
+                    unit = " (C/km)"
+                } else if (a == "Temperature"){
+                    y.push(temperature);
+                    unit = " (C)"
+                } else if (a == "Pressure"){
+                    y.push(pressure)
+                    unit = " (mbar)"
+                }else if (a == "Boiling point"){
+                    y.push(tBoil)
+                    unit = " (C)"
+                }else if(a == "Dew point"){
+                    y.push(tDew)
+                    unit = " (C)"
+                }
+                
+            }
+
+            //chart
+            const ctx = document.getElementById('myChart');
+            const myChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: x,
+                    datasets: [{
+                        data: y,
+                        borderColor:'#d1458b',
+                        pointRadius: 0,
+                        label: (a+" vs altitude")
+                    }],
+                },
+                options: {
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: (a + unit),
+                            }
+                        },
+                        x: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: 'Altitude (km)',
+                            }
+                        }
+                    }
+                }
+            });
+        };
+
+        //slider
+
+        var slider = document.getElementById("slider");
+        var output = document.getElementById("val1");
+        output.innerHTML = slider.value;
+        slider.oninput = function() {
+            output.innerHTML = this.value;
+            iU = this.value;
+
+            let chartStatus = Chart.getChart("myChart");
+            if (chartStatus != undefined) {
+                chartStatus.destroy();
+            } 
+        runGraph(flag)
+        
+        }; 
+
+    </script>
+        
+
+</body>
+</html>
+
+
